@@ -1,0 +1,39 @@
+# Azure Virtual Desktop Session Host Deployment Configuration
+# Rename this file to terraform.tfvars and update with your values
+
+# Resource Group Configuration
+resource_group_name = "rg-avd-demo-westeurope"
+location            = "West Europe"
+
+# Networking Configuration (Existing Resources)
+existing_vnet_name           = "vnet-avd-demo"
+existing_vnet_resource_group = "rg-avd-network"
+existing_subnet_name         = "snet-avd-sessionhosts"
+
+# Azure Compute Gallery Configuration
+gallery_name           = "gal_avd_images"
+gallery_resource_group = "rg-avd-images"
+gallery_image_name     = "img-avd-win11-m365"
+gallery_image_version  = "1.2.0"  # Will be used in hostname as v120
+
+# Session Host Configuration
+session_host_count = 3  # Deploy 3 session hosts
+session_host_size  = "Standard_D4s_v5"  # Supports Trusted Launch & Encryption at Host
+admin_username     = "avdadmin"
+# admin_password = "YourSecurePassword123!"  # Set via environment variable: TF_VAR_admin_password
+
+# Azure Virtual Desktop Configuration
+hostpool_name           = "hp-avd-demo-pooled"
+hostpool_resource_group = "rg-avd-hostpools"
+# host_pool_registration_token = "eyJ..."  # Set via environment variable: TF_VAR_host_pool_registration_token
+
+# Tags
+tags = {
+  Environment  = "Demo"
+  ManagedBy    = "Terraform"
+  Purpose      = "AVD-Blog-Post"
+  Department   = "IT"
+  CostCenter   = "1234"
+  DeployedBy   = "YourName"
+  DeployedDate = "2025-01-31"
+}

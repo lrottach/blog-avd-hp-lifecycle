@@ -1,0 +1,210 @@
+# Azure Virtual Desktop Terraform Demo
+
+This repository contains a basic yet production-ready Terraform configuration for deploying Azure Virtual Desktop (AVD) session hosts using Azure Compute Gallery images.
+
+## 🎯 Purpose
+
+This demo is designed for a blog post about Azure Virtual Desktop and Terraform, showcasing:
+- Dynamic session host deployment from Compute Gallery images
+- Modern security features (Trusted Launch, Encryption at Host)
+- Entra ID join for cloud-native identity
+- Best practices for Terraform and Azure
+
+## 📋 Prerequisites
+
+Before deploying, ensure you have:
+
+1. **Azure Resources** (must exist):
+   - Resource Group for session hosts
+   - Virtual Network and Subnet
+   - Azure Compute Gallery with Gen2 image
+   - AVD Host Pool with valid registration token
+   
+2. **Azure Permissions**:
+   - Virtual Machine Contributor
+   - Network Contributor
+   - User Access Administrator (for managed identities)
+
+3. **Tools**:
+   - Terraform >= 1.5.0
+   - Azure CLI (for authentication)
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Resource Group                        │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │ Session Host │  │ Session Host │  │ Session Host │  │
+│  │   Zone 1     │  │   Zone 2     │  │   Zone 3     │  │
+│  │              │  │              │  │              │  │
+│  │ ✓ Gen2 VM    │  │ ✓ Gen2 VM    │  │ ✓ Gen2 VM    │  │
+│  │ ✓ Trusted    │  │ ✓ Trusted    │  │ ✓ Trusted    │  │
+│  │   Launch     │  │   Launch     │  │   Launch     │  │
+│  │ ✓ Encryption │  │ ✓ Encryption │  │ ✓ Encryption │  │
+│  │   at Host    │  │   at Host    │  │   at Host    │  │
+│  │ ✓ Entra ID   │  │ ✓ Entra ID   │  │ ✓ Entra ID   │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
+│         │                  │                  │          │
+│  ┌──────┴──────────────────┴──────────────────┴───────┐ │
+│  │              Existing Subnet                        │ │
+│  └─────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+## 🚀 Quick Start
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd avd-terraform-demo
+   ```
+
+2. **Copy and configure variables**:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars with your values
+   ```
+
+3. **Set sensitive variables**:
+   ```bash
+   export TF_VAR_admin_password="YourSecurePassword123!"
+   export TF_VAR_host_pool_registration_token="eyJ..."
+   ```
+
+4. **Initialize Terraform**:
+   ```bash
+   terraform init
+   ```
+
+5. **Plan the deployment**:
+   ```bash
+   terraform plan
+   ```
+
+6. **Apply the configuration**:
+   ```bash
+   terraform apply
+   ```
+
+## 📝 Configuration
+
+### Required Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `resource_group_name` | Resource group for session hosts | `rg-avd-demo` |
+| `existing_vnet_name` | Existing virtual network name | `vnet-avd` |
+| `existing_subnet_name` | Subnet for session hosts | `snet-sessionhosts` |
+| `gallery_name` | Azure Compute Gallery name | `gal_avd_images` |
+| `gallery_image_version` | Image version (dots removed for hostname) | `1.2.0` → hostname: `v120` |
+| `session_host_count` | Number of VMs to deploy | `3` |
+| `admin_password` | Local admin password | Set via env var |
+| `host_pool_registration_token` | AVD registration token | Set via env var |
+
+### Security Features
+
+All session hosts are deployed with:
+- **Trusted Launch**: Secure Boot + vTPM enabled
+- **Encryption at Host**: Data encrypted at rest
+- **Entra ID Join**: Cloud-native identity
+- **Guest Attestation**: Integrity monitoring
+- **Gen2 VMs**: Required for Trusted Launch
+
+### Naming Convention
+
+Session hosts follow this pattern:
+```
+avd-sh-v{version}-{index}
+```
+Example: `avd-sh-v120-001` for version 1.2.0, first host
+
+## 🔧 Module Usage
+
+The project includes a reusable module for session host deployment:
+
+```hcl
+module "session_hosts" {
+  source = "./modules/session-hosts"
+  
+  resource_group_name          = "rg-avd-prod"
+  location                     = "West Europe"
+  subnet_id                    = data.azurerm_subnet.avd.id
+  gallery_image_id             = data.azurerm_shared_image_version.avd.id
+  gallery_image_version        = "2.0.0"
+  session_host_count           = 5
+  session_host_size            = "Standard_D4s_v5"
+  admin_username               = "avdadmin"
+  admin_password               = var.admin_password
+  hostpool_name                = "hp-avd-prod"
+  hostpool_resource_group      = "rg-avd-hostpools"
+  host_pool_registration_token = var.registration_token
+  
+  tags = {
+    Environment = "Production"
+    ManagedBy   = "Terraform"
+  }
+}
+```
+
+## 📊 Outputs
+
+The configuration provides:
+- Session host names and IDs
+- Private IP addresses
+- Availability zone distribution
+- Security features status
+- Network configuration details
+
+## ⚡ VM Size Requirements
+
+Choose VM sizes that support:
+- Trusted Launch (Gen2)
+- Encryption at Host
+- Your performance requirements
+
+Recommended sizes:
+- `Standard_D4s_v5` (4 vCPU, 16 GB RAM)
+- `Standard_D8s_v5` (8 vCPU, 32 GB RAM)
+- `Standard_E4s_v5` (4 vCPU, 32 GB RAM)
+
+## 🛡️ Security Considerations
+
+1. **Secrets Management**:
+   - Never commit passwords or tokens
+   - Use environment variables or Azure Key Vault
+   - Consider using managed identities
+
+2. **Network Security**:
+   - NSG restricts RDP to VNet only
+   - Consider adding Azure Bastion
+   - Review subnet NSG rules
+
+3. **Identity**:
+   - Entra ID join requires proper licensing
+   - Assign appropriate RBAC roles
+   - Configure conditional access
+
+## 🧹 Cleanup
+
+To remove all resources:
+```bash
+terraform destroy
+```
+
+## 📚 Additional Resources
+
+- [Azure Virtual Desktop Documentation](https://docs.microsoft.com/azure/virtual-desktop/)
+- [Terraform AzureRM Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest)
+- [Azure Compute Gallery](https://docs.microsoft.com/azure/virtual-machines/shared-image-galleries)
+- [Trusted Launch for Azure VMs](https://docs.microsoft.com/azure/virtual-machines/trusted-launch)
+
+## 🤝 Contributing
+
+This is a demo project for educational purposes. Feel free to fork and adapt for your needs!
+
+## 📄 License
+
+This project is provided as-is for demonstration purposes.
