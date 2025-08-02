@@ -1,22 +1,22 @@
 # Session Host Information
 output "session_host_names" {
   description = "Names of the deployed session hosts"
-  value       = [for vm in azurerm_windows_virtual_machine.session_hosts : vm.name]
+  value       = module.session_hosts.vm_names
 }
 
 output "session_host_ids" {
   description = "Resource IDs of the deployed session hosts"
-  value       = [for vm in azurerm_windows_virtual_machine.session_hosts : vm.id]
+  value       = module.session_hosts.vm_ids
 }
 
 output "session_host_private_ips" {
   description = "Private IP addresses of the session hosts"
-  value       = [for nic in azurerm_network_interface.session_hosts : nic.private_ip_address]
+  value       = module.session_hosts.private_ip_addresses
 }
 
 output "session_host_zones" {
   description = "Availability zones of the session hosts"
-  value       = [for vm in azurerm_windows_virtual_machine.session_hosts : vm.zone]
+  value       = module.session_hosts.availability_zones
 }
 
 # Security Information
@@ -46,10 +46,22 @@ output "image_details" {
 # Network Information
 output "network_security_group_id" {
   description = "ID of the network security group for session hosts"
-  value       = azurerm_network_security_group.session_hosts.id
+  value       = module.session_hosts.network_security_group_id
 }
 
 output "subnet_id" {
   description = "ID of the subnet where session hosts are deployed"
   value       = data.azurerm_subnet.existing.id
+}
+
+# Managed Identity Information
+output "managed_identity_ids" {
+  description = "System-assigned managed identity IDs of the session hosts"
+  value       = module.session_hosts.managed_identity_ids
+}
+
+# Host Pool Registration Information
+output "registration_token_expiry" {
+  description = "Expiration date of the generated host pool registration token"
+  value       = azurerm_virtual_desktop_host_pool_registration_info.avd.expiration_date
 }

@@ -88,11 +88,6 @@ variable "hostpool_resource_group" {
   type        = string
 }
 
-variable "host_pool_registration_token" {
-  description = "Registration token for the AVD host pool"
-  type        = string
-  sensitive   = true
-}
 
 # Tagging
 variable "tags" {
