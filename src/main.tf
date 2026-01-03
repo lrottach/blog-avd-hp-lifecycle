@@ -6,17 +6,21 @@ data "azurerm_resource_group" "main" {
   name = var.resource_group_name
 }
 
-# Data source for existing virtual network
-data "azurerm_virtual_network" "existing" {
-  name                = var.existing_vnet_name
-  resource_group_name = var.existing_vnet_resource_group
-}
+# Deploy networking infrastructure
+module "networking" {
+  source = "./modules/networking"
 
-# Data source for existing subnet
-data "azurerm_subnet" "existing" {
-  name                 = var.existing_subnet_name
-  virtual_network_name = var.existing_vnet_name
-  resource_group_name  = var.existing_vnet_resource_group
+  name_prefix = var.network_name_prefix
+  location    = var.location
+
+  # Optional overrides (if provided)
+  network_resource_group_name = var.network_resource_group_name
+  vnet_name                   = var.vnet_name
+  vnet_address_space          = var.vnet_address_space
+  subnet_name                 = var.subnet_name
+  subnet_address_prefix       = var.subnet_address_prefix
+
+  tags = var.tags
 }
 
 # Data source for the gallery image
@@ -42,29 +46,29 @@ resource "azurerm_virtual_desktop_host_pool_registration_info" "avd" {
 # Deploy session hosts using the module
 module "session_hosts" {
   source = "./modules/session-hosts"
-  
+
   # Core configuration
   resource_group_name = data.azurerm_resource_group.main.name
   location            = data.azurerm_resource_group.main.location
-  
+
   # Network configuration
-  subnet_id = data.azurerm_subnet.existing.id
-  
+  subnet_id = module.networking.subnet_id
+
   # Gallery image configuration
   gallery_image_id      = data.azurerm_shared_image_version.avd.id
   gallery_image_version = var.gallery_image_version
-  
+
   # Session host configuration
   session_host_count = var.session_host_count
   session_host_size  = var.session_host_size
   admin_username     = var.admin_username
   admin_password     = var.admin_password
-  
+
   # AVD host pool configuration
   hostpool_name                = var.hostpool_name
   hostpool_resource_group      = var.hostpool_resource_group
   host_pool_registration_token = azurerm_virtual_desktop_host_pool_registration_info.avd.token
-  
+
   # Naming and tagging
   name_prefix = "avd"
   tags        = var.tags
