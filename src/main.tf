@@ -1,34 +1,40 @@
 # Azure Virtual Desktop Session Hosts Deployment
 # This configuration uses the session-hosts module to deploy AVD session hosts
 
-# Data source for existing resource group
-data "azurerm_resource_group" "main" {
-  name = var.resource_group_name
+# Local variables for resource group naming
+locals {
+  network_resource_group_name = var.network_resource_group_name != null ? var.network_resource_group_name : "rg-${var.network_name_prefix}-network"
+}
+
+# Resource Group for Session Hosts
+resource "azurerm_resource_group" "session_hosts" {
+  name     = var.resource_group_name
+  location = var.location
+  tags     = var.tags
+}
+
+# Resource Group for Networking
+resource "azurerm_resource_group" "network" {
+  name     = local.network_resource_group_name
+  location = var.location
+  tags     = var.tags
 }
 
 # Deploy networking infrastructure
 module "networking" {
   source = "./modules/networking"
 
-  name_prefix = var.network_name_prefix
-  location    = var.location
+  name_prefix         = var.network_name_prefix
+  resource_group_name = azurerm_resource_group.network.name
+  location            = azurerm_resource_group.network.location
 
   # Optional overrides (if provided)
-  network_resource_group_name = var.network_resource_group_name
-  vnet_name                   = var.vnet_name
-  vnet_address_space          = var.vnet_address_space
-  subnet_name                 = var.subnet_name
-  subnet_address_prefix       = var.subnet_address_prefix
+  vnet_name             = var.vnet_name
+  vnet_address_space    = var.vnet_address_space
+  subnet_name           = var.subnet_name
+  subnet_address_prefix = var.subnet_address_prefix
 
   tags = var.tags
-}
-
-# Data source for the gallery image
-data "azurerm_shared_image_version" "avd" {
-  name                = var.gallery_image_version
-  image_name          = var.gallery_image_name
-  gallery_name        = var.gallery_name
-  resource_group_name = var.gallery_resource_group
 }
 
 # Data source to get existing host pool
@@ -48,15 +54,18 @@ module "session_hosts" {
   source = "./modules/session-hosts"
 
   # Core configuration
-  resource_group_name = data.azurerm_resource_group.main.name
-  location            = data.azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.session_hosts.name
+  location            = azurerm_resource_group.session_hosts.location
 
   # Network configuration
   subnet_id = module.networking.subnet_id
 
-  # Gallery image configuration
-  gallery_image_id      = data.azurerm_shared_image_version.avd.id
-  gallery_image_version = var.gallery_image_version
+  # Marketplace image configuration
+  image_publisher = var.marketplace_image_publisher
+  image_offer     = var.marketplace_image_offer
+  image_sku       = var.marketplace_image_sku
+  image_version   = var.marketplace_image_version
+  vm_name_suffix  = var.vm_name_suffix
 
   # Session host configuration
   session_host_count = var.session_host_count

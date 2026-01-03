@@ -57,25 +57,50 @@ variable "subnet_address_prefix" {
   }
 }
 
-# Azure Compute Gallery Configuration
-variable "gallery_name" {
-  description = "Name of the Azure Compute Gallery containing the image"
+# Marketplace Image Configuration
+variable "marketplace_image_publisher" {
+  description = "Publisher of the marketplace image"
   type        = string
+  default     = "MicrosoftWindowsDesktop"
+
+  validation {
+    condition     = can(regex("^Microsoft", var.marketplace_image_publisher))
+    error_message = "Publisher must be a Microsoft publisher (e.g., MicrosoftWindowsDesktop, MicrosoftWindowsServer)."
+  }
 }
 
-variable "gallery_resource_group" {
-  description = "Resource group name of the Azure Compute Gallery"
+variable "marketplace_image_offer" {
+  description = "Offer of the marketplace image"
   type        = string
+  default     = "office-365"
+
+  validation {
+    condition     = contains(["windows-11", "windows-10", "office-365", "WindowsServer"], var.marketplace_image_offer)
+    error_message = "Offer must be one of: windows-11, windows-10, office-365, WindowsServer."
+  }
 }
 
-variable "gallery_image_name" {
-  description = "Name of the image definition in the gallery"
+variable "marketplace_image_sku" {
+  description = "SKU of the marketplace image"
   type        = string
+  default     = "win11-23h2-avd-m365"
 }
 
-variable "gallery_image_version" {
-  description = "Version of the image to use (e.g., 1.2.0)"
+variable "marketplace_image_version" {
+  description = "Version of the marketplace image (use 'latest' for the newest version)"
   type        = string
+  default     = "latest"
+}
+
+variable "vm_name_suffix" {
+  description = "Suffix for VM names for version tracking (e.g., 'v1', 'v2'). Used in hostname as 'avd-sh-{suffix}-001'."
+  type        = string
+  default     = "v1"
+
+  validation {
+    condition     = can(regex("^[a-z0-9]{1,10}$", var.vm_name_suffix))
+    error_message = "VM name suffix must be lowercase alphanumeric, 1-10 characters (e.g., 'v1', 'v2', 'gen2')."
+  }
 }
 
 # Session Host Configuration

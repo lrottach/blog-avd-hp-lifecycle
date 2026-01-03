@@ -34,12 +34,12 @@ output "security_features" {
 
 # Image Information
 output "image_details" {
-  description = "Details of the image used for deployment"
+  description = "Details of the marketplace image used for deployment"
   value = {
-    gallery_name  = var.gallery_name
-    image_name    = var.gallery_image_name
-    image_version = var.gallery_image_version
-    image_id      = data.azurerm_shared_image_version.avd.id
+    publisher = var.marketplace_image_publisher
+    offer     = var.marketplace_image_offer
+    sku       = var.marketplace_image_sku
+    version   = var.marketplace_image_version
   }
 }
 

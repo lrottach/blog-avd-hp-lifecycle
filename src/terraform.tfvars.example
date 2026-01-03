@@ -6,20 +6,33 @@ resource_group_name = "rg-avd-demo-westeurope"
 location            = "West Europe"
 
 # Networking Configuration
-network_name_prefix    = "avd-demo"  # Creates: rg-avd-demo-network, vnet-avd-demo, snet-avd-demo-sessionhosts
-vnet_address_space     = ["10.0.0.0/16"]
-subnet_address_prefix  = "10.0.1.0/24"
+network_name_prefix   = "avd-demo" # Prefix for network resources: vnet-avd-demo, snet-avd-demo-sessionhosts
+vnet_address_space    = ["10.0.0.0/16"]
+subnet_address_prefix = "10.0.1.0/24"
+
+# Optional: Override default network resource group name (default: rg-{network_name_prefix}-network)
+# network_resource_group_name = "rg-custom-network-name"
 
 # Optional: Override default network resource names
-# network_resource_group_name = "rg-custom-network-name"
-# vnet_name                   = "vnet-custom-name"
-# subnet_name                 = "snet-custom-name"
+# vnet_name   = "vnet-custom-name"
+# subnet_name = "snet-custom-name"
 
-# Azure Compute Gallery Configuration
-gallery_name           = "gal_avd_images"
-gallery_resource_group = "rg-avd-images"
-gallery_image_name     = "img-avd-win11-m365"
-gallery_image_version  = "1.2.0"  # Will be used in hostname as v120
+# Marketplace Image Configuration
+marketplace_image_publisher = "MicrosoftWindowsDesktop"
+marketplace_image_offer     = "office-365"
+marketplace_image_sku       = "win11-23h2-avd-m365"
+marketplace_image_version   = "latest"
+vm_name_suffix              = "v1" # Used in hostname: avd-sh-v1-001
+
+# Common Windows 11 Multi-Session SKUs:
+# - win11-23h2-avd        : Windows 11 Enterprise Multi-Session, Version 23H2
+# - win11-23h2-avd-m365   : Windows 11 Enterprise Multi-Session + Microsoft 365 Apps, Version 23H2 (Default)
+# - win11-22h2-avd        : Windows 11 Enterprise Multi-Session, Version 22H2
+# - win11-22h2-avd-m365   : Windows 11 Enterprise Multi-Session + Microsoft 365 Apps, Version 22H2
+
+# Common Windows 10 Multi-Session SKUs:
+# - win10-22h2-avd        : Windows 10 Enterprise Multi-Session, Version 22H2
+# - win10-22h2-avd-m365   : Windows 10 Enterprise Multi-Session + Microsoft 365 Apps, Version 22H2
 
 # Session Host Configuration
 session_host_count = 3  # Deploy 3 session hosts

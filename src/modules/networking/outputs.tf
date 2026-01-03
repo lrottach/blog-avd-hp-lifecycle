@@ -2,12 +2,7 @@
 
 output "resource_group_name" {
   description = "Name of the network resource group"
-  value       = azurerm_resource_group.network.name
-}
-
-output "resource_group_id" {
-  description = "ID of the network resource group"
-  value       = azurerm_resource_group.network.id
+  value       = var.resource_group_name
 }
 
 output "vnet_id" {

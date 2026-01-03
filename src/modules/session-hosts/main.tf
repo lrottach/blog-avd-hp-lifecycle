@@ -1,11 +1,8 @@
 # Module: Session Hosts - Main Configuration
 
 locals {
-  # Clean version string for Windows hostname compatibility
-  clean_version = replace(var.gallery_image_version, ".", "")
-
-  # Hostname prefix with version
-  hostname_prefix = "${var.name_prefix}-sh-v${local.clean_version}"
+  # Hostname prefix with version suffix
+  hostname_prefix = "${var.name_prefix}-sh-${var.vm_name_suffix}"
 }
 
 # Network Security Group
@@ -75,7 +72,12 @@ resource "azurerm_windows_virtual_machine" "this" {
     storage_account_type = "Premium_LRS"
   }
 
-  source_image_id = var.gallery_image_id
+  source_image_reference {
+    publisher = var.image_publisher
+    offer     = var.image_offer
+    sku       = var.image_sku
+    version   = var.image_version
+  }
 
   network_interface_ids = [
     azurerm_network_interface.this[count.index].id
@@ -90,8 +92,8 @@ resource "azurerm_windows_virtual_machine" "this" {
   }
 
   tags = merge(var.tags, {
-    "AVD-Version" = var.gallery_image_version
-    "AVD-Index"   = format("%03d", count.index + 1)
+    "AVD-Image-SKU" = var.image_sku
+    "AVD-Index"     = format("%03d", count.index + 1)
   })
 }
 

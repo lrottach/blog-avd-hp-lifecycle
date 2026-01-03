@@ -5,15 +5,14 @@ variable "name_prefix" {
   type        = string
 }
 
-variable "location" {
-  description = "Azure region where networking resources will be deployed"
+variable "resource_group_name" {
+  description = "Name of the resource group for networking resources"
   type        = string
 }
 
-variable "network_resource_group_name" {
-  description = "Optional name override for the network resource group (default: rg-{name_prefix}-network)"
+variable "location" {
+  description = "Azure region where networking resources will be deployed"
   type        = string
-  default     = null
 }
 
 variable "vnet_name" {

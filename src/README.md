@@ -1,211 +1,122 @@
 # Azure Virtual Desktop Terraform Demo
 
-This repository contains a basic yet production-ready Terraform configuration for deploying Azure Virtual Desktop (AVD) session hosts using Azure Compute Gallery images.
+A simplified Terraform configuration for deploying Azure Virtual Desktop (AVD) session hosts using Azure Marketplace images. This project demonstrates modern AVD deployment patterns with infrastructure as code.
 
-## 🎯 Purpose
+**Key Features:**
+- Automated deployment of AVD session hosts from marketplace images
+- Self-contained networking (VNet and subnet creation)
+- Modern security features (Trusted Launch, Encryption at Host, Entra ID Join)
+- Version tracking through hostname suffixes
 
-This demo is designed for a blog post about Azure Virtual Desktop and Terraform, showcasing:
-- Dynamic session host deployment from Compute Gallery images
-- Modern security features (Trusted Launch, Encryption at Host)
-- Entra ID join for cloud-native identity
-- Best practices for Terraform and Azure
+Read the full blog post: [Link to be added]
+
+## ⚠️ Important Disclaimers
+
+**Demo Purpose Only**: This project is created for blog post demonstrations and learning purposes. It is **not recommended for production environments** without significant modifications and hardening.
+
+**Custom Images for Production**: While this demo uses Azure Marketplace images for simplicity and ease of deployment, production environments should consider using **custom images from Azure Compute Gallery** to:
+- Maintain consistent baseline configurations across your environment
+- Include pre-installed applications, patches, and corporate tools
+- Implement organization-specific security hardening and compliance requirements
+- Control update schedules and image versioning independently
+
+## 🚀 What Gets Deployed
+
+This Terraform configuration automatically creates:
+
+**Network Infrastructure:**
+- Resource group for networking (default: `rg-{network_name_prefix}-network`)
+- Virtual Network with configurable address space (default: 10.0.0.0/16)
+- Subnet for session hosts (default: 10.0.1.0/24)
+
+**Session Hosts:**
+- Resource group for session hosts (user-specified name)
+- Windows 11 Enterprise Multi-Session + Microsoft 365 Apps (latest from marketplace)
+- Deployed across availability zones for high availability
+- System-assigned managed identities
+- Network interfaces with dynamic IP allocation
+
+**Security Features:**
+- Trusted Launch (Secure Boot + vTPM)
+- Encryption at Host enabled
+- Entra ID Join for cloud-native identity
+- Guest Attestation for integrity monitoring
+
+**Architecture**: Two resource groups are automatically created: one for networking infrastructure and one for session hosts. Session hosts are connected to the provisioned VNet and registered to an existing AVD host pool using automatically generated registration tokens.
 
 ## 📋 Prerequisites
 
 Before deploying, ensure you have:
 
-1. **Azure Resources** (must exist):
-   - Resource Group for session hosts
-   - Virtual Network and Subnet
-   - Azure Compute Gallery with Gen2 image
-   - AVD Host Pool with valid registration token
-   
-2. **Azure Permissions**:
-   - Virtual Machine Contributor
-   - Network Contributor
-   - User Access Administrator (for managed identities)
-
-3. **Tools**:
-   - Terraform >= 1.5.0
-   - Azure CLI (for authentication)
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Resource Group                        │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │ Session Host │  │ Session Host │  │ Session Host │  │
-│  │   Zone 1     │  │   Zone 2     │  │   Zone 3     │  │
-│  │              │  │              │  │              │  │
-│  │ ✓ Gen2 VM    │  │ ✓ Gen2 VM    │  │ ✓ Gen2 VM    │  │
-│  │ ✓ Trusted    │  │ ✓ Trusted    │  │ ✓ Trusted    │  │
-│  │   Launch     │  │   Launch     │  │   Launch     │  │
-│  │ ✓ Encryption │  │ ✓ Encryption │  │ ✓ Encryption │  │
-│  │   at Host    │  │   at Host    │  │   at Host    │  │
-│  │ ✓ Entra ID   │  │ ✓ Entra ID   │  │ ✓ Entra ID   │  │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
-│         │                  │                  │          │
-│  ┌──────┴──────────────────┴──────────────────┴───────┐ │
-│  │              Existing Subnet                        │ │
-│  └─────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-```
+1. **Azure subscription** with appropriate permissions (Contributor or higher)
+2. **Existing AVD Host Pool** - Must be created beforehand in Azure
+3. **Terraform** >= 1.5.0 installed locally
+4. **Azure CLI** installed and authenticated (`az login`)
 
 ## 🚀 Quick Start
 
-1. **Clone the repository**:
+1. **Clone and navigate to the project:**
    ```bash
    git clone <repository-url>
    cd avd-terraform-demo
    ```
 
-2. **Copy and configure variables**:
+2. **Configure your deployment:**
    ```bash
    cp terraform.tfvars.example terraform.tfvars
-   # Edit terraform.tfvars with your values
+   # Edit terraform.tfvars with your Azure resource names
    ```
 
-3. **Set sensitive variables**:
+3. **Set the admin password:**
    ```bash
    export TF_VAR_admin_password="YourSecurePassword123!"
    ```
-   
-   > **Note**: The host pool registration token is now automatically generated by Terraform with a 4-hour validity period.
 
-4. **Initialize Terraform**:
+4. **Deploy the infrastructure:**
    ```bash
    terraform init
-   ```
-
-5. **Plan the deployment**:
-   ```bash
    terraform plan
-   ```
-
-6. **Apply the configuration**:
-   ```bash
    terraform apply
    ```
 
-## 📝 Configuration
+The host pool registration token is automatically generated with a 4-hour validity period.
 
-### Required Variables
+## 🔧 Configuration
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `resource_group_name` | Resource group for session hosts | `rg-avd-demo` |
-| `existing_vnet_name` | Existing virtual network name | `vnet-avd` |
-| `existing_subnet_name` | Subnet for session hosts | `snet-sessionhosts` |
-| `gallery_name` | Azure Compute Gallery name | `gal_avd_images` |
-| `gallery_image_version` | Image version (dots removed for hostname) | `1.2.0` → hostname: `v120` |
-| `session_host_count` | Number of VMs to deploy | `3` |
-| `admin_password` | Local admin password | Set via env var |
-| `host_pool_registration_token` | AVD registration token | Set via env var |
+Key settings are configured in `terraform.tfvars`. Main options include:
 
-### Security Features
+- **Resource Groups**: Both networking and session host resource groups are created automatically
+  - Session hosts: Specify explicit name via `resource_group_name`
+  - Networking: Default `rg-{network_name_prefix}-network`, or override with `network_resource_group_name`
+- **Session Host Count**: Number of VMs to deploy (default: 2)
+- **VM Image**: Change `marketplace_image_sku` to use different Windows versions
+- **Version Tracking**: Set `vm_name_suffix` (e.g., "v1", "v2") for hostname versioning
+- **VM Size**: Default is `Standard_D4s_v5` (supports Trusted Launch and Encryption at Host)
+- **Networking**: Customize VNet and subnet address spaces
 
-All session hosts are deployed with:
-- **Trusted Launch**: Secure Boot + vTPM enabled
-- **Encryption at Host**: Data encrypted at rest
-- **Entra ID Join**: Cloud-native identity
-- **Guest Attestation**: Integrity monitoring
-- **Gen2 VMs**: Required for Trusted Launch
+**Common Windows SKUs** (see `terraform.tfvars.example` for complete list):
+- `win11-23h2-avd-m365` - Windows 11 + M365 Apps (default)
+- `win11-23h2-avd` - Windows 11 without M365
+- `win10-22h2-avd-m365` - Windows 10 + M365 Apps
 
-### Naming Convention
-
-Session hosts follow this pattern:
+**Hostname Example** with `vm_name_suffix = "v1"`:
 ```
-avd-sh-v{version}-{index}
+avd-sh-v1-001, avd-sh-v1-002, avd-sh-v1-003
 ```
-Example: `avd-sh-v120-001` for version 1.2.0, first host
-
-## 🔧 Module Usage
-
-The project includes a reusable module for session host deployment:
-
-```hcl
-module "session_hosts" {
-  source = "./modules/session-hosts"
-  
-  resource_group_name          = "rg-avd-prod"
-  location                     = "West Europe"
-  subnet_id                    = data.azurerm_subnet.avd.id
-  gallery_image_id             = data.azurerm_shared_image_version.avd.id
-  gallery_image_version        = "2.0.0"
-  session_host_count           = 5
-  session_host_size            = "Standard_D4s_v5"
-  admin_username               = "avdadmin"
-  admin_password               = var.admin_password
-  hostpool_name                = "hp-avd-prod"
-  hostpool_resource_group      = "rg-avd-hostpools"
-  host_pool_registration_token = var.registration_token
-  
-  tags = {
-    Environment = "Production"
-    ManagedBy   = "Terraform"
-  }
-}
-```
-
-## 📊 Outputs
-
-The configuration provides:
-- Session host names and IDs
-- Private IP addresses
-- Availability zone distribution
-- Security features status
-- Network configuration details
-
-## ⚡ VM Size Requirements
-
-Choose VM sizes that support:
-- Trusted Launch (Gen2)
-- Encryption at Host
-- Your performance requirements
-
-Recommended sizes:
-- `Standard_D4s_v5` (4 vCPU, 16 GB RAM)
-- `Standard_D8s_v5` (8 vCPU, 32 GB RAM)
-- `Standard_E4s_v5` (4 vCPU, 32 GB RAM)
-
-## 🛡️ Security Considerations
-
-1. **Secrets Management**:
-   - Never commit passwords or tokens
-   - Use environment variables or Azure Key Vault
-   - Consider using managed identities
-
-2. **Network Security**:
-   - NSG restricts RDP to VNet only
-   - Consider adding Azure Bastion
-   - Review subnet NSG rules
-
-3. **Identity**:
-   - Entra ID join requires proper licensing
-   - Assign appropriate RBAC roles
-   - Configure conditional access
 
 ## 🧹 Cleanup
 
-To remove all resources:
+To remove all deployed resources:
+
 ```bash
 terraform destroy
 ```
 
+**Warning**: This will delete all session hosts, networking infrastructure, and associated resources created by this configuration.
+
 ## 📚 Additional Resources
 
+- Blog Post: [Link to be added]
 - [Azure Virtual Desktop Documentation](https://docs.microsoft.com/azure/virtual-desktop/)
 - [Terraform AzureRM Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest)
-- [Azure Compute Gallery](https://docs.microsoft.com/azure/virtual-machines/shared-image-galleries)
-- [Trusted Launch for Azure VMs](https://docs.microsoft.com/azure/virtual-machines/trusted-launch)
-
-## 🤝 Contributing
-
-This is a demo project for educational purposes. Feel free to fork and adapt for your needs!
-
-## 📄 License
-
-This project is provided as-is for demonstration purposes.
+- [Azure Marketplace Windows Images](https://docs.microsoft.com/azure/virtual-machines/windows/cli-ps-findimage)

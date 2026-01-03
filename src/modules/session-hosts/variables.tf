@@ -15,13 +15,28 @@ variable "subnet_id" {
   type        = string
 }
 
-variable "gallery_image_id" {
-  description = "ID of the shared image version to use"
+variable "image_publisher" {
+  description = "Publisher of the marketplace image"
   type        = string
 }
 
-variable "gallery_image_version" {
-  description = "Version string of the image (used for naming)"
+variable "image_offer" {
+  description = "Offer of the marketplace image"
+  type        = string
+}
+
+variable "image_sku" {
+  description = "SKU of the marketplace image"
+  type        = string
+}
+
+variable "image_version" {
+  description = "Version of the marketplace image"
+  type        = string
+}
+
+variable "vm_name_suffix" {
+  description = "Suffix for VM names for version tracking"
   type        = string
 }
 
