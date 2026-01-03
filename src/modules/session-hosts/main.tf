@@ -182,7 +182,7 @@ resource "azurerm_virtual_machine_extension" "avd_dsc" {
 # This data source tracks the session host registrations
 data "azapi_resource" "avd_session_host" {
   count     = var.session_host_count
-  type      = "Microsoft.DesktopVirtualization/hostPools/sessionHosts@2022-02-10-preview"
+  type      = "Microsoft.DesktopVirtualization/hostPools/sessionHosts@2024-04-03"
   name      = "${azurerm_windows_virtual_machine.this[count.index].name}.${azurerm_windows_virtual_machine.this[count.index].location}.cloudapp.azure.com"
   parent_id = var.hostpool_id
 
@@ -195,7 +195,7 @@ data "azapi_resource" "avd_session_host" {
 # Uses force=true to handle active/disconnected user sessions
 resource "azapi_resource_action" "avd_session_host_delete" {
   count       = var.session_host_count
-  type        = "Microsoft.DesktopVirtualization/hostPools/sessionHosts@2022-02-10-preview"
+  type        = "Microsoft.DesktopVirtualization/hostPools/sessionHosts@2024-04-03"
   resource_id = "${data.azapi_resource.avd_session_host[count.index].id}?force=true"
   method      = "DELETE"
   when        = "destroy"
