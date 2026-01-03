@@ -77,6 +77,7 @@ module "session_hosts" {
   hostpool_name                = var.hostpool_name
   hostpool_resource_group      = var.hostpool_resource_group
   host_pool_registration_token = azurerm_virtual_desktop_host_pool_registration_info.avd.token
+  hostpool_id                  = data.azurerm_virtual_desktop_host_pool.avd.id
 
   # Naming and tagging
   name_prefix = "avd"

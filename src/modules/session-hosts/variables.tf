@@ -88,3 +88,8 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "hostpool_id" {
+  description = "Resource ID of the AVD host pool (required for session host cleanup)"
+  type        = string
+}
